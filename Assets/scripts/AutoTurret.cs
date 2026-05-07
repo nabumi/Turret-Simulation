@@ -22,12 +22,33 @@ public class AutoTurret : MonoBehaviour
 
     void Update()
     {
-        Debug.Log("스크립트 작동 중!");
+        if (target == null || !target.gameObject.activeInHierarchy)
+        {
+            FindNearestEnemy();
+        }
+
         if (target == null) return;
 
         UpdateYaw();
         UpdatePitch();
         CheckAndFire();
+    }
+    private void FindNearestEnemy()
+    {
+        GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
+        float closestDistance = Mathf.Infinity;
+        Transform nearestEnemy = null;
+
+        foreach (GameObject enemy in enemies)
+        {
+            float distance = Vector3.Distance(transform.position, enemy.transform.position);
+            if (distance < closestDistance)
+            {
+                closestDistance = distance;
+                nearestEnemy = enemy.transform;
+            }
+        }
+        target = nearestEnemy;
     }
 
     private void UpdateYaw()
