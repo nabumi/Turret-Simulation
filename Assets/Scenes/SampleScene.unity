@@ -971,7 +971,7 @@ MonoBehaviour:
   initialSpawnCount: 4
   maxAliveCount: 10
   spawnIntervalSeconds: 1
-  enemyMoveSpeed: 7
+  enemyMoveSpeed: 4
   enemyLifeTimeSeconds: 15
 --- !u!4 &1472838653
 Transform:

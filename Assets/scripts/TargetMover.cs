@@ -1,11 +1,13 @@
 using UnityEngine;
 using System;
+using System.Collections;
 
 [RequireComponent(typeof(Rigidbody))]
 public class TargetMover : MonoBehaviour
 {
     [Header("Movement Setting")]
     public float moveSpeed = 5f;
+    private float currentSpeed; //워프 중에는 멈추게 하기 위한 변수
 
     [Header("Vertical Movement")]
     public float amplitude = 0.5f; 
@@ -36,16 +38,23 @@ public class TargetMover : MonoBehaviour
     public void Initialize(float speed, float duration, Action<GameObject> onRelease)
     {
         moveSpeed = speed; //기존 속도 개념 적용
+        currentSpeed = speed; //기본 속도 저장
         lifeTime = duration;
         returnToPool = onRelease;
         timer = 0;
         initialY = targetTransform.localPosition.y;
+
+        if (gameObject.activeInHierarchy)
+        {
+            StopAllCoroutines();
+            StartCoroutine(WarpInRoutine());
+        }
     }
 
 
     void Update()
     {
-        transform.Translate(Vector3.forward * moveSpeed * Time.deltaTime);
+        transform.Translate(Vector3.forward * currentSpeed * Time.deltaTime);
 
         if (targetTransform != null)
         {
@@ -60,7 +69,7 @@ public class TargetMover : MonoBehaviour
         timer += Time.deltaTime;
         if (timer >= lifeTime)
         {
-            returnToPool?.Invoke(gameObject);
+            ReleaseSelf();
         }
     }
     private void OnTriggerEnter(Collider other)
@@ -69,7 +78,7 @@ public class TargetMover : MonoBehaviour
         {
 
             Destroy(other.gameObject);
-            ReleaseSelf();
+            StartCoroutine(HitEffectRoutine());
         }
         else if (other.CompareTag("Turret"))
         {
@@ -80,5 +89,51 @@ public class TargetMover : MonoBehaviour
     private void ReleaseSelf()
     {
         returnToPool?.Invoke(gameObject);
+    }
+
+    IEnumerator HitEffectRoutine()
+    {
+        currentSpeed = 0f; // 맞으면 멈춤
+        Renderer rd = targetTransform.GetComponent<Renderer>();
+        if (rd != null)
+        {
+            Color originalColor = rd.material.color;
+            for (int i = 0; i < 2; i++)
+            {
+                rd.material.color = Color.red;
+                yield return new WaitForSeconds(0.05f);
+                rd.material.color = originalColor;
+                yield return new WaitForSeconds(0.05f);
+            }
+        }
+        ReleaseSelf();
+    }
+
+    IEnumerator WarpInRoutine()
+    {
+        transform.localScale = Vector3.zero;
+        currentSpeed = 0;
+
+        float duration1 = 0.15f;
+        float elapsed1 = 0f;
+        while (elapsed1 < duration1)
+        {
+            elapsed1 += Time.deltaTime;
+            transform.localScale = Vector3.Lerp(Vector3.zero, Vector3.one * 1.2f, elapsed1 / duration1);
+            yield return null;
+        }
+        transform.localScale = Vector3.one * 1.2f;
+
+        float duration2 = 0.1f;
+        float elapsed2 = 0f;
+        while (elapsed2 < duration2)
+        {
+            elapsed2 += Time.deltaTime;
+            transform.localScale = Vector3.Lerp(Vector3.one * 1.2f, Vector3.one, elapsed2 / duration2);
+            yield return null;
+        }
+        transform.localScale = Vector3.one;
+
+        currentSpeed = moveSpeed;
     }
 }

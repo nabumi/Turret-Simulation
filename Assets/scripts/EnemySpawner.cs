@@ -83,12 +83,13 @@ public class EnemySpawner : MonoBehaviour
             }
         }
 
+        enemy.SetActive(true);
+
         var mover = enemy.GetComponent<TargetMover>();
         if (mover != null)
         {
             mover.Initialize(enemyMoveSpeed, enemyLifeTimeSeconds, (obj) => pool.Release(obj));
         }
-        enemy.SetActive(true);
     }
 
     private void OnReleaseEnemy(GameObject enemy)

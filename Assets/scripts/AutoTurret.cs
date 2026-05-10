@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 public class AutoTurret : MonoBehaviour
 {
@@ -19,6 +20,14 @@ public class AutoTurret : MonoBehaviour
     public float fireAngleThreshold = 5f; // 조준 완료 허용 각도 (도)
     public float fireInterval = 0.5f;     // 발사 간격 (초)
     private float fireTimer = 0f;
+
+    [Header("이펙트 셋팅")]
+    private Vector3 defaultPitchPos; //터렛의 원래 위치를 저장할 변수
+
+    private void Start()
+    {
+        defaultPitchPos = pitchPivot.localPosition;
+    }
 
     void Update()
     {
@@ -50,6 +59,7 @@ public class AutoTurret : MonoBehaviour
         }
         target = nearestEnemy;
     }
+
 
     private void UpdateYaw()
     {
@@ -99,6 +109,9 @@ public class AutoTurret : MonoBehaviour
     {
         Instantiate(projectilePrefab, muzzlePoint.position, muzzlePoint.rotation);
 
+        StopCoroutine(nameof(RecoilRoutine));
+        StartCoroutine(RecoilRoutine());
+
         Debug.DrawRay(muzzlePoint.position, muzzlePoint.forward * 10f, Color.red, 0.5f);
     }
 
@@ -109,5 +122,25 @@ public class AutoTurret : MonoBehaviour
             Gizmos.color = Color.yellow;
             Gizmos.DrawRay(muzzlePoint.position, muzzlePoint.forward * 5f);
         }
+    }
+    IEnumerator RecoilRoutine()
+    {
+
+        Vector3 recoilPos = defaultPitchPos - Vector3.forward * 0.5f;
+
+        pitchPivot.localPosition = recoilPos;
+        yield return new WaitForSeconds(0.05f);
+
+        float duration = 0.2f; // 복귀 시간
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            pitchPivot.localPosition = Vector3.Lerp(recoilPos, defaultPitchPos, elapsed / duration);
+            yield return null;
+        }
+
+        pitchPivot.localPosition = defaultPitchPos;
     }
 }
